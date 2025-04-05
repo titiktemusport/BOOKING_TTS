@@ -151,23 +151,24 @@
 
   <a href="admin.html" class="admin-link">Admin Panel</a>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+  <!-- Firebase SDK NON-MODULE compatible with GitHub Pages -->
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
 
+  <script>
     const firebaseConfig = {
-     apiKey: "AIzaSyA3uj2UC4BBDTafwoup-kQ66PHcTYIwQfg",
-    authDomain: "booking-titiktemusport.firebaseapp.com",
-    databaseURL: "https://booking-titiktemusport-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "booking-titiktemusport",
-    storageBucket: "booking-titiktemusport.firebasestorage.app",
-    messagingSenderId: "214575001621",
-    appId: "1:214575001621:web:18ba18132612e89d8d9e1c",
-    measurementId: "G-HZHZ7Z9LZP"
+      apiKey: "AIzaSyA3uj2UC4BBDTafwoup-kQ66PHcTYIwQfg",
+      authDomain: "booking-titiktemusport.firebaseapp.com",
+      databaseURL: "https://booking-titiktemusport-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "booking-titiktemusport",
+      storageBucket: "booking-titiktemusport.appspot.com",
+      messagingSenderId: "214575001621",
+      appId: "1:214575001621:web:18ba18132612e89d8d9e1c",
+      measurementId: "G-HZHZ7Z9LZP"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const startHour = 6;
     const endHour = 24;
@@ -267,8 +268,8 @@
       document.getElementById("booking-date").value = today;
       document.getElementById("selected-date-display").textContent = formatDateDisplay(today);
 
-      const bookingsRef = ref(db, "bookings");
-      onValue(bookingsRef, (snapshot) => {
+      const bookingsRef = db.ref("bookings");
+      bookingsRef.on("value", (snapshot) => {
         const data = snapshot.val() || {};
         bookedData = data;
         generateAllSlots();
