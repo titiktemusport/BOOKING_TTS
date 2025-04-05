@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Booking Titik Temu Sport</title>
   <style>
     body {
@@ -103,6 +103,11 @@
       color: #555;
       margin-top: 5px;
     }
+    .admin-link {
+      display: block;
+      text-align: center;
+      margin-top: 40px;
+    }
     @media (max-width: 600px) {
       .grid {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -117,7 +122,7 @@
     <label for="booking-date">Pilih Tanggal: </label><br><br>
     <div class="date-input-wrapper" onclick="document.getElementById('booking-date').showPicker()">
       <span id="selected-date-display"></span>
-      <input type="date" id="booking-date" onchange="handleDateChange()">
+      <input type="date" id="booking-date" onchange="handleDateChange()" />
     </div>
   </div>
 
@@ -132,7 +137,9 @@
     </div>
   </div>
 
-  <a href="admin.html">Admin Panel</a>
+  <div class="admin-link">
+    <a href="admin.html">Admin Panel</a>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
@@ -180,7 +187,7 @@
     }
 
     function formatDateDisplay(dateStr) {
-      const [year, month, day] = dateStr.split('-');
+      const [year, month, day] = dateStr.split("-");
       const date = new Date(dateStr);
       const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       return `${dayNames[date.getDay()]}, ${day}-${month}-${year}`;
@@ -202,7 +209,7 @@
       const dayName = dayNames[dateObj.getDay()];
 
       for (let hour = startHour; hour < endHour; hour++) {
-        const time = hour.toString().padStart(2, '0') + ":00";
+        const time = hour.toString().padStart(2, "0") + ":00";
         const price = getSlotPrice(hour, selectedDate);
 
         const slot = document.createElement("div");
@@ -228,7 +235,7 @@
           slot.onclick = () => {
             const message = `Halo! Saya ingin booking ${lapanganName} pada hari ${dayName}, tanggal ${selectedDate} jam ${time}. Harga: ${price}`;
             const whatsappLink = `https://wa.me/6285712687558?text=${encodeURIComponent(message)}`;
-            window.open(whatsappLink, '_blank');
+            window.open(whatsappLink, "_blank");
           };
         }
 
@@ -245,7 +252,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       document.getElementById("booking-date").value = today;
       document.getElementById("selected-date-display").textContent = formatDateDisplay(today);
 
