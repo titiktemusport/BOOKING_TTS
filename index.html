@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Titik Temu Sport</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff8f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #ff6600;
+    }
+    .date-picker {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .date-input-wrapper {
+      display: inline-block;
+      position: relative;
+      border: 2px solid #ff6600;
+      border-radius: 10px;
+      padding: 10px 15px;
+      background-color: white;
+      font-size: 16px;
+      color: #333;
+      cursor: pointer;
+      width: 250px;
+    }
+    .date-input-wrapper span {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+    }
+    .date-input-wrapper input[type="date"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      font-size: 16px;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .lapangan-container {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .lapangan {
+      background: #fff;
+      padding: 10px;
+      border-radius: 12px;
+    }
+    .lapangan h2 {
+      text-align: center;
+      color: #ff6600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+    }
+    .slot {
+      padding: 15px;
+      background: #ffffff;
+      border: 2px solid #ff6600;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: 0.3s;
+      position: relative;
+    }
+    .slot:hover {
+      background: #ffe0cc;
+    }
+    .slot .price {
+      font-size: 12px;
+      color: #555;
+      margin-top: 5px;
+    }
+    .slot .day {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .booked {
+      background: #cccccc;
+      border-color: #999999;
+      cursor: not-allowed;
+    }
+    .booked::after {
+      content: "\A Booked";
+      white-space: pre;
+      display: block;
+      font-size: 12px;
+      color: #555;
+      margin-top: 5px;
+    }
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Booking Titik Temu Sport</h1>
+
+  <div class="date-picker">
+    <label for="booking-date">Pilih Tanggal: </label><br><br>
+    <div class="date-input-wrapper" onclick="document.getElementById('booking-date').showPicker()">
+      <span id="selected-date-display"></span>
+      <input type="date" id="booking-date" onchange="handleDateChange()">
+    </div>
+  </div>
+
+  <div class="lapangan-container">
+    <div class="lapangan">
+      <h2>Lapangan 1</h2>
+      <div class="grid" id="slots-lap1"></div>
+    </div>
+    <div class="lapangan">
+      <h2>Lapangan 2</h2>
+      <div class="grid" id="slots-lap2"></div>
+    </div>
+  </div>
+
+  <a href="admin.html">Admin Panel</a>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "API_KEY",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://PROJECT_ID.firebaseio.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const startHour = 6;
+    const endHour = 24;
+
+    let bookedData = {};
+
+    function getSlotPrice(hour, dateStr) {
+      const date = new Date(dateStr);
+      const day = date.getDay();
+      const isWeekend = day === 0 || day === 6;
+
+      if (isWeekend) {
+        if (hour >= 6 && hour <= 11) return "Rp340.000";
+        if (hour >= 12 && hour <= 14) return "Rp300.000";
+        if (hour >= 15 && hour <= 17) return "Rp350.000";
+        if (hour >= 18 && hour <= 19) return "Rp470.000";
+        if (hour >= 20 && hour <= 22) return "Rp500.000";
+        if (hour >= 23 || hour === 0) return "Rp450.000";
+      } else {
+        if (hour >= 6 && hour <= 11) return "Rp300.000";
+        if (hour >= 12 && hour <= 14) return "Rp250.000";
+        if (hour >= 15 && hour <= 17) return "Rp330.000";
+        if (hour >= 18 && hour <= 19) return "Rp420.000";
+        if (hour >= 20 && hour <= 22) return "Rp440.000";
+        if (hour >= 23 || hour === 0) return "Rp380.000";
+      }
+      return "Rp150.000";
+    }
+
+    function formatDateDisplay(dateStr) {
+      const [year, month, day] = dateStr.split('-');
+      const date = new Date(dateStr);
+      const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      return `${dayNames[date.getDay()]}, ${day}-${month}-${year}`;
+    }
+
+    function handleDateChange() {
+      const dateInput = document.getElementById("booking-date");
+      const selectedDateDisplay = document.getElementById("selected-date-display");
+      selectedDateDisplay.textContent = formatDateDisplay(dateInput.value);
+      generateAllSlots();
+    }
+
+    function generateSlots(containerId, bookedSlots, lapanganName, selectedDate) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+
+      const dateObj = new Date(selectedDate);
+      const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      const dayName = dayNames[dateObj.getDay()];
+
+      for (let hour = startHour; hour < endHour; hour++) {
+        const time = hour.toString().padStart(2, '0') + ":00";
+        const price = getSlotPrice(hour, selectedDate);
+
+        const slot = document.createElement("div");
+        slot.className = "slot";
+
+        const timeDiv = document.createElement("div");
+        timeDiv.innerText = time;
+        slot.appendChild(timeDiv);
+
+        const priceDiv = document.createElement("div");
+        priceDiv.className = "price";
+        priceDiv.innerText = price;
+        slot.appendChild(priceDiv);
+
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+        dayDiv.innerText = dayName;
+        slot.appendChild(dayDiv);
+
+        if (bookedSlots.includes(time)) {
+          slot.classList.add("booked");
+        } else {
+          slot.onclick = () => {
+            const message = `Halo! Saya ingin booking ${lapanganName} pada hari ${dayName}, tanggal ${selectedDate} jam ${time}. Harga: ${price}`;
+            const whatsappLink = `https://wa.me/6285712687558?text=${encodeURIComponent(message)}`;
+            window.open(whatsappLink, '_blank');
+          };
+        }
+
+        container.appendChild(slot);
+      }
+    }
+
+    function generateAllSlots() {
+      const selectedDate = document.getElementById("booking-date").value;
+      const booked = bookedData[selectedDate] || { lap1: [], lap2: [] };
+
+      generateSlots("slots-lap1", booked.lap1 || [], "Lapangan 1", selectedDate);
+      generateSlots("slots-lap2", booked.lap2 || [], "Lapangan 2", selectedDate);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("booking-date").value = today;
+      document.getElementById("selected-date-display").textContent = formatDateDisplay(today);
+
+      const bookingsRef = ref(db, "bookings");
+      onValue(bookingsRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        bookedData = data;
+        generateAllSlots();
+      });
+    });
+  </script>
+</body>
+</html>

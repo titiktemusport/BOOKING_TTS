@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Booking - Titik Temu Sport</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #ff6600;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      background: #ff6600;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e65c00;
+    }
+    .success {
+      color: green;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .daftar-booking {
+      margin-top: 40px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .booking-item {
+      background: #fdd;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .booking-item span {
+      float: right;
+      background: #4CAF50;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel - Booking Lapangan</h1>
+
+  <label for="booking-date">Tanggal Booking</label>
+  <input type="date" id="booking-date" />
+
+  <label for="lapangan">Pilih Lapangan</label>
+  <select id="lapangan">
+    <option value="lap1">Lapangan 1</option>
+    <option value="lap2">Lapangan 2</option>
+  </select>
+
+  <label for="jam">Pilih Jam</label>
+  <select id="jam">
+    <!-- Jam dari 06:00 sampai 23:00 -->
+    <script>
+      const jamSelect = [];
+      for (let i = 6; i <= 23; i++) {
+        const jam = i.toString().padStart(2, "0") + ":00";
+        jamSelect.push(`<option value="${jam}">${jam}</option>`);
+      }
+      document.write(jamSelect.join(''));
+    </script>
+  </select>
+
+  <label for="nama">Nama Pemesan</label>
+  <input type="text" id="nama" placeholder="Masukkan nama pemesan" />
+
+  <label for="wa">Nomor WhatsApp</label>
+  <input type="text" id="wa" placeholder="Masukkan nomor WhatsApp" />
+
+  <button onclick="tandaiBooking()">Tandai Sudah Dibooking</button>
+  <div class="success" id="notif"></div>
+
+  <div class="daftar-booking">
+    <h2>Daftar Booking</h2>
+    <label for="tanggal-lihat">Pilih Tanggal untuk Menampilkan Booking</label>
+    <input type="date" id="tanggal-lihat" onchange="tampilkanBooking()"/>
+    <div id="list-booking"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    // Import Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAu3j2UC4BBDTafwoup-kQ66PHcTYIwQfg",
+      authDomain: "booking-titiktemusport.firebaseapp.com",
+      databaseURL: "https://booking-titiktemusport-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "booking-titiktemusport",
+      storageBucket: "booking-titiktemusport.appspot.com",
+      messagingSenderId: "214575001621",
+      appId: "1:214575001621:web:18ba18132612e89d8d9e1c",
+      measurementId: "G-HZHZ79LZP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function tandaiBooking() {
+      const tgl = document.getElementById("booking-date").value;
+      const lap = document.getElementById("lapangan").value;
+      const jam = document.getElementById("jam").value;
+      const nama = document.getElementById("nama").value;
+      const wa = document.getElementById("wa").value;
+
+      if (!tgl || !jam || !lap || !nama || !wa) {
+        alert("Mohon lengkapi semua field.");
+        return;
+      }
+
+      const refDb = ref(db, `booking/${tgl}`);
+      const data = {
+        lapangan: lap,
+        jam: jam,
+        nama: nama,
+        whatsapp: wa
+      };
+
+      push(refDb, data).then(() => {
+        document.getElementById("notif").textContent = "Booking berhasil disimpan ke Firebase.";
+        document.getElementById("nama").value = "";
+        document.getElementById("wa").value = "";
+        tampilkanBooking();
+      });
+    }
+
+    function tampilkanBooking() {
+      const tgl = document.getElementById("tanggal-lihat").value;
+      const list = document.getElementById("list-booking");
+      list.innerHTML = "";
+
+      if (!tgl) return;
+
+      const refDb = ref(db, `booking/${tgl}`);
+      onValue(refDb, (snapshot) => {
+        list.innerHTML = "";
+        if (!snapshot.exists()) {
+          list.innerHTML = "<p>Tidak ada data booking.</p>";
+          return;
+        }
+        const data = snapshot.val();
+        Object.values(data).forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "booking-item";
+          div.innerHTML = `<strong>${item.nama}</strong><br/>
+            ${tgl} Jam: ${item.jam}<br/>
+            Lapangan: ${item.lapangan.toUpperCase()}<span>${item.whatsapp}</span>`;
+          list.appendChild(div);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
